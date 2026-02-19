@@ -8,5 +8,8 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 # copy src app (copy local ./app directory into /app/app inside the container)
 COPY ./app /app/app
 
-# run backend
-CMD ["fastapi", "run", "app/main.py"]
+COPY ./alembic /app/alembic
+COPY ./alembic.ini /app/alembic.ini
+
+# run backend and database migrations ('alembic ugrade head' is idempotent - it won't do anything if already at latest migration)
+CMD ["sh", "-c", "alembic upgrade head && fastapi run app/main.py"]
