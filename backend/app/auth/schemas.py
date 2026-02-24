@@ -1,9 +1,17 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
+from typing import Optional
 
 
-# client sends to /auth/register:
+# client sends to /register:
 class UserCreate(BaseModel):
     email: EmailStr
+    password: str
+
+
+# client sends to /login:
+class UserLogin(BaseModel):
+    email: Optional[EmailStr]
+    username: Optional[str]
     password: str
 
 
@@ -14,7 +22,7 @@ class UserResponse(BaseModel):
     email: str
 
 
-# /auth/login returns:
+# /login returns:
 class Token(BaseModel):
     access_token: str
     token_type: str
