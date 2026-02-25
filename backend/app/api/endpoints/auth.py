@@ -1,20 +1,27 @@
-from fastapi import APIRouter, HTTPException, Request, Body, Depends
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Depends
 
 # db
 from sqlalchemy.orm import Session
-from app.database import get_db
 from app.models.user import User
 
 # utils
-from app.auth.jwt import create_access_token, decode_access_token
+from app.auth.jwt import create_access_token
 from app.auth.security import hash_password, verify_password
+
+# deps
+from app.auth.dependencies import get_current_user
+from app.database import get_db
 
 # schema
 from app.auth.schemas import UserCreate, UserResponse, UserLogin, Token
 
 
 router = APIRouter()
+
+
+@router.get("/me", response_model=UserResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
 
 
 @router.post("/register", response_model=UserResponse, status_code=201)

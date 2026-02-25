@@ -10,8 +10,8 @@ class UserCreate(BaseModel):
 
 # client sends to /login:
 class UserLogin(BaseModel):
-    email: Optional[EmailStr]
-    username: Optional[str]
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
     password: str
 
 
