@@ -1,0 +1,46 @@
+# Defines how to build this package into a distributable wheel/sdist.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Core package metadata — used by pip, PyPI, and other tools to identify this package.
+[project]
+name = "sentrafi"
+version = "0.0.1"
+description = "AI-powered personal finance CLI"
+readme = "README.md"
+requires-python = ">= 3.12"
+license = "MIT"
+authors = [
+    { name = "Johnathan Bryce", email = "johnathanbryce@gmail.com" }
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Environment :: Console",
+    "Topic :: Office/Business :: Financial",
+    "Development Status :: 2 - Pre-Alpha",
+]
+
+# Runtime dependencies — installed automatically when someone runs `pip install sentrafi`.
+# typer: CLI framework (commands, arguments, help text)
+# httpx: HTTP client for calling the FastAPI backend
+# keyring: Secure credential storage (macOS Keychain, Windows Credential Locker, etc.)
+dependencies = [
+    "typer",
+    "httpx",
+    "keyring",
+]
+
+# Links shown on the PyPI package page.
+[project.urls]
+Homepage = "https://github.com/johnathanbryce/sentrafi"
+Repository = "https://github.com/johnathanbryce/sentrafi"
+Issues = "https://github.com/johnathanbryce/sentrafi/issues"
+
+# Console entry points — maps a terminal command to a Python callable.
+# After `pip install sentrafi`, typing `sentra` in the terminal runs sentra.main:app
+[project.scripts]
+sentra = "sentra.main:app"
