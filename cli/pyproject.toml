@@ -40,6 +40,6 @@ Repository = "https://github.com/johnathanbryce/sentrafi"
 Issues = "https://github.com/johnathanbryce/sentrafi/issues"
 
 # Console entry points — maps a terminal command to a Python callable.
-# After `pip install sentrafi`, typing `sentra` in the terminal runs sentra.main:app
+# After `pip install sentrafi`, typing `sentra` in the terminal runs sentrafi.main:app
 [project.scripts]
-sentra = "sentra.main:app"
+sentra = "sentrafi.main:app"
