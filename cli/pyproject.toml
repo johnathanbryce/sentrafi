@@ -34,7 +34,6 @@ dependencies = [
     "keyring",
 ]
 
-# Links shown on the PyPI package page.
 [project.urls]
 Homepage = "https://github.com/johnathanbryce/sentrafi"
 Repository = "https://github.com/johnathanbryce/sentrafi"

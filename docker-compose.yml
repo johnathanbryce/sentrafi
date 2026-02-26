@@ -35,6 +35,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-sentrafi}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-sentrafi_db}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      ENVIRONMENT: ${ENVIRONMENT}
     # for auto dev reloading for code changes:
     # TODO: remove when ready for prod
     volumes:
