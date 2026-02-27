@@ -1,5 +1,4 @@
 from pydantic import BaseModel, EmailStr, ConfigDict
-from typing import Optional
 
 
 # client sends to /register:
@@ -10,8 +9,7 @@ class UserCreate(BaseModel):
 
 # client sends to /login:
 class UserLogin(BaseModel):
-    email: Optional[EmailStr] = None
-    username: Optional[str] = None
+    email: EmailStr
     password: str
 
 

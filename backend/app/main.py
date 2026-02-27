@@ -39,4 +39,5 @@ def init_app():
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
     db.execute(text("SELECT 1"))
+    # TODO: test health for Redis
     return {"status": "ok", "db": "connected"}

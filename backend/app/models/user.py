@@ -1,6 +1,5 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Optional
 from uuid import uuid4
 
 from sqlalchemy import String, DateTime, func
@@ -26,7 +25,6 @@ class User(Base):
     email: Mapped[str] = mapped_column(
         String(255), unique=True, nullable=False, index=True
     )
-    username: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(

@@ -29,6 +29,7 @@ classifiers = [
 # httpx: HTTP client for calling the FastAPI backend
 # keyring: Secure credential storage (macOS Keychain, Windows Credential Locker, etc.)
 dependencies = [
+    "python-dotenv",
     "typer",
     "httpx",
     "keyring",

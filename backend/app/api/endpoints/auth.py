@@ -45,12 +45,8 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token, status_code=200)
 def login(user_data: UserLogin, db: Session = Depends(get_db)):
-    # check if user exists via email or username
-    user = None
-    if user_data.email:
-        user = db.query(User).filter(User.email == user_data.email).first()
-    elif user_data.username:
-        user = db.query(User).filter(User.username == user_data.username).first()
+    # check if user exists via email
+    user = db.query(User).filter(User.email == user_data.email).first()
     if not user:
         raise HTTPException(
             status_code=401, detail="User does not exist. Please register."
