@@ -1,11 +1,11 @@
 import typer
 import httpx
-import keyring
+import keyring  # type: ignore (backend venv activated as primary interpreter)
 
 from ..config import API_BASE_URL, API_VERSION_PREFIX, OLLAMA_URL
 
 
-def init_sentrafi():
+def init_command():
 
     # test  health
     res_health = httpx.get(f"{API_BASE_URL}/health")

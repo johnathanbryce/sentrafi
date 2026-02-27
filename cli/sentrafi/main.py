@@ -28,13 +28,10 @@
 #   email: str = typer.Option(..., prompt=True)         — option that prompts if not provided via flag
 
 import typer
-import httpx
-import keyring
 
 
-from .config import API_BASE_URL, API_VERSION_PREFIX, OLLAMA_URL
-
-from .commands.init import init_sentrafi
+from .commands.init import init_command
+from .commands.auth import login_command
 
 app = typer.Typer()
 
@@ -47,7 +44,12 @@ def main():
 
 @app.command()
 def init():
-    init_sentrafi()
+    init_command()
+
+
+@app.command()
+def login():
+    login_command()
 
 
 if __name__ == "__main__":
