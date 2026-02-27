@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import String, DateTime, Numeric, ForeignKey, func
+from sqlalchemy import String, Text, DateTime, Numeric, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,6 +30,9 @@ class Profile(Base):
         nullable=False,
     )
 
+    # identity
+    profession: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
     # income (optional — user can sync statements without providing these)
     annual_salary: Mapped[Optional[Decimal]] = mapped_column(
         Numeric(12, 2), nullable=True
@@ -38,12 +41,17 @@ class Profile(Base):
         String(20), nullable=True, default="biweekly"
     )
 
-    # tax (optional — enhances analysis but not required)
-    filing_status: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
-    state: Mapped[Optional[str]] = mapped_column(String(2), nullable=True)
-    additional_withholding: Mapped[Optional[Decimal]] = mapped_column(
-        Numeric(10, 2), default=0
+    # location & currency (optional — enhances tax and financial analysis)
+    country: Mapped[Optional[str]] = mapped_column(String(3), nullable=True)
+    province_or_state: Mapped[Optional[str]] = mapped_column(
+        String(50), nullable=True
     )
+    currency: Mapped[Optional[str]] = mapped_column(
+        String(3), nullable=True, default="USD"
+    )
+
+    # free-text context for LLM analysis (validated to 500 chars at API level)
+    additional_context: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # timestamps
     created_at: Mapped[datetime] = mapped_column(

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
 ALGORITHM = "HS256"
-EXPIRY_TIME = 30
+EXPIRY_TIME = 60 * 24 * 30  # 30 days
 
 
 def create_access_token(user_id: str) -> str:
