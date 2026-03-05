@@ -1,8 +1,10 @@
+from datetime import datetime
+
 import typer
 import httpx
-import keyring  # type: ignore (backend venv activated as primary interpreter)
+import keyring  # type: ignore
 
-from ..config import API_BASE_URL, API_VERSION_PREFIX, OLLAMA_URL
+from ..config import API_BASE_URL, API_VERSION_PREFIX
 
 
 def profile_setup_command():
@@ -78,44 +80,64 @@ def profile_setup_command():
 
     # financial goals
     typer.secho("\n[ Financial Goals ]", fg="blue", bold=True)
-    typer.echo(
-        "  List your financial goals in order of priority (most important first)."
-    )
-    typer.echo("  Press Enter to skip a goal.\n")
-
-    for i in range(1, 6):
-        if i > 3:
-            if not typer.confirm(f"  Add goal #{i}?", default=False):
-                break
-
-        typer.secho(f"  Goal #{i}", fg="cyan")
-        goal_name = typer.prompt(
-            "    Name (e.g. Emergency fund, Pay off debt)",
-            default="",
-            show_default=False,
+    if typer.confirm("  Would you like to set financial goals?", default=True):
+        typer.echo(
+            "  List your financial goals in order of priority (most important first)."
         )
-        if not goal_name:
-            if i <= 3:
-                continue
-            else:
-                break
+        typer.echo("  Press Enter to skip a goal.\n")
 
-        goal = {"name": goal_name, "priority": i}
+        for i in range(1, 6):
+            if i > 3:
+                if not typer.confirm(f"  Add goal #{i}?", default=False):
+                    break
 
-        target_amount = typer.prompt(
-            "    Target amount", default="", show_default=False
-        )
-        if target_amount:
-            goal["target_amount"] = target_amount
+            typer.secho(f"  Goal #{i}", fg="cyan")
+            goal_name = typer.prompt(
+                "    Name (e.g. Emergency fund, Pay off debt)",
+                default="",
+                show_default=False,
+            )
+            if not goal_name:
+                if i <= 3:
+                    continue
+                else:
+                    break
 
-        deadline = typer.prompt(
-            "    Deadline (YYYY-MM-DD)", default="", show_default=False
-        )
-        if deadline:
-            goal["deadline"] = deadline
+            goal = {"name": goal_name, "priority": i}
 
-        goals_data.append(goal)
-        typer.echo("")
+            while True:
+                target_amount = typer.prompt(
+                    "    Target amount (numbers only)", default="", show_default=False
+                )
+                if not target_amount:
+                    break
+                try:
+                    goal["target_amount"] = str(float(target_amount))
+                    break
+                except ValueError:
+                    typer.secho(
+                        "    Invalid input. Enter a number (e.g. 15000 or 15000.50).",
+                        fg="red",
+                    )
+
+            while True:
+                deadline = typer.prompt(
+                    "    Deadline (YYYY-MM-DD)", default="", show_default=False
+                )
+                if not deadline:
+                    break
+                try:
+                    datetime.strptime(deadline, "%Y-%m-%d")
+                    goal["deadline"] = deadline
+                    break
+                except ValueError:
+                    typer.secho(
+                        "    Invalid date. Use YYYY-MM-DD format (e.g. 2027-06-01).",
+                        fg="red",
+                    )
+
+            goals_data.append(goal)
+            typer.echo("")
 
     # additional context
     typer.secho("\n[ Additional Context ]", fg="blue", bold=True)
@@ -163,10 +185,25 @@ def profile_setup_command():
     typer.echo("")
 
     # confirm before saving
-    typer.confirm("  Save profile?", abort=True)
+    typer.confirm("  Save profile?", abort=True, default=True)
 
-    # TODO: POST profile_data and goals_data to backend
-    typer.secho("\n  Profile saved successfully!", fg="green")
+    token = keyring.get_password("sentrafi", "access_token")
+    create_profile_payload = {**profile_data, "financial_goals": goals_data}
+    try:
+        create_profile_res = httpx.post(
+            f"{API_BASE_URL}{API_VERSION_PREFIX}/profile/create",
+            json=create_profile_payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        if create_profile_res.status_code == 409:
+            typer.secho("\n  This profile already exists in our system.", fg="yellow")
+        elif create_profile_res.status_code == 201:
+            typer.secho("\n  Profile saved successfully!", fg="green")
+        else:
+            typer.secho("\n  Profile did not save.", fg="red")
+    except httpx.ConnectError:
+        typer.secho("\n  Error reaching backend during profile creation.", fg="red")
 
 
 def profile_edit_command():

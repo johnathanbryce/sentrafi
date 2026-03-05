@@ -17,7 +17,7 @@ def login_command():
         user_access_token = login_res.json()["access_token"]
 
         # store in keyring
-        keyring.set_password("sentrafi", user_email, user_access_token)
+        keyring.set_password("sentrafi", "access_token", user_access_token)
         typer.secho("Login successful.", fg="green")
 
     elif login_res.status_code == 401:

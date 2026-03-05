@@ -20,7 +20,11 @@ class FinancialGoal(Base):
     __tablename__ = "financial_goals"
 
     id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid4
+        UUID(as_uuid=False),
+        primary_key=True,
+        default=lambda: str(
+            uuid4()
+        ),  # lambda makes it callable so sqlalchemy invokes it each time to convert num to str
     )
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),

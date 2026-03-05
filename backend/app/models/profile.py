@@ -21,7 +21,11 @@ class Profile(Base):
     __tablename__ = "profiles"
 
     id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid4
+        UUID(as_uuid=False),
+        primary_key=True,
+        default=lambda: str(
+            uuid4()
+        ),  # lambda makes it callable so sqlalchemy invokes it each time to convert num to str
     )
     user_id: Mapped[str] = mapped_column(
         UUID(as_uuid=False),
@@ -43,9 +47,7 @@ class Profile(Base):
 
     # location & currency (optional — enhances tax and financial analysis)
     country: Mapped[Optional[str]] = mapped_column(String(3), nullable=True)
-    province_or_state: Mapped[Optional[str]] = mapped_column(
-        String(50), nullable=True
-    )
+    province_or_state: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     currency: Mapped[Optional[str]] = mapped_column(
         String(3), nullable=True, default="USD"
     )

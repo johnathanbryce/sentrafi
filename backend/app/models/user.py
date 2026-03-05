@@ -20,7 +20,11 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid4
+        UUID(as_uuid=False),
+        primary_key=True,
+        default=lambda: str(
+            uuid4()
+        ),  # lambda makes it callable so sqlalchemy invokes it each time to convert num to str
     )
     email: Mapped[str] = mapped_column(
         String(255), unique=True, nullable=False, index=True
