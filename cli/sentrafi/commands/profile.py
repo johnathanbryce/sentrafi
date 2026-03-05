@@ -1,4 +1,5 @@
 from datetime import datetime
+from pprint import pprint
 
 import typer
 import httpx
@@ -208,4 +209,76 @@ def profile_setup_command():
 
 def profile_edit_command():
     typer.secho("\nEntering Profile Edit.\n", fg="cyan", bold=True)
-    typer.echo("\n")  # TODO: enter appropriate edit profile intro message
+
+    token = keyring.get_password("sentrafi", "access_token")
+
+    # check if user is logged in / a real user
+    try:
+        verify_user = httpx.get(
+            f"{API_BASE_URL}{API_VERSION_PREFIX}/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        if verify_user.status_code == 401:
+            typer.secho(
+                "This account is not recognized by SentraFi. Please login and create an account before editing.",
+                fg="red",
+            )
+            raise typer.Exit()
+    except httpx.NetworkError:
+        typer.secho("\n  Error reaching SentraFi's backend.", fg="red")
+        raise typer.Exit()
+
+    # fetch user details from db & show full profile
+    try:
+        user_details_res = httpx.get(
+            f"{API_BASE_URL}{API_VERSION_PREFIX}/profile/details",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        user_details = user_details_res.json()
+
+        if user_details_res.status_code == 404:
+            typer.secho(
+                "Account not found. No user details are available to edit",
+                fg="red",
+            )
+            raise typer.Exit()
+    except httpx.NetworkError:
+        typer.secho("\n  Error reaching SentraFi's backend.", fg="red")
+        raise typer.Exit()
+
+    # display current profile
+    typer.secho("\n  --- Current Profile ---\n", fg="green", bold=True)
+    for key, value in user_details["profile_details"].items():
+        if key == "id":
+            continue
+        label = key.replace("_", " ").title()
+        styled_label = typer.style(f"    {label}: ", fg="cyan")
+        styled_value = typer.style(f"{value or '—'}", fg="yellow")
+        typer.echo(styled_label + styled_value)
+
+    # display financial goals
+    goals = user_details["financial_goals"]
+    if goals:
+        typer.secho("\n  --- Financial Goals ---\n", fg="green", bold=True)
+        for goal in goals:
+            line = typer.style(f"    #{goal['priority']}  ", fg="cyan", bold=True)
+            line += typer.style(goal["name"], fg="yellow", bold=True)
+            if goal["target_amount"]:
+                line += typer.style(f"  —  ${goal['target_amount']}", fg="white")
+            if goal["deadline"]:
+                line += typer.style(f"  —  by {goal['deadline']}", fg="white")
+            typer.echo(line)
+    else:
+        typer.secho("\n  No financial goals set.", fg="yellow")
+
+    typer.echo("")
+
+
+# ask user what they want to edit
+
+# walk through one by one what they want to edit
+
+# while edit == True:
+# ...
+
+# commit updates to db

@@ -70,3 +70,8 @@ class ProfileResponse(BaseModel):
 class CreateProfileResponse(BaseModel):
     status: str
     profile: ProfileResponse
+
+
+class ProfileDetailsResponse(BaseModel):
+    profile_details: ProfileResponse
+    financial_goals: list[FinancialGoalCreate]

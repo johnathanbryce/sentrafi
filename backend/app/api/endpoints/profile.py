@@ -11,7 +11,12 @@ from app.auth.dependencies import get_current_user
 from app.database import get_db
 
 # schema
-from app.auth.schemas import UserProfileCreate, CreateProfileResponse
+from app.auth.schemas import (
+    UserProfileCreate,
+    CreateProfileResponse,
+    ProfileResponse,
+    ProfileDetailsResponse,
+)
 
 
 router = APIRouter()
@@ -53,3 +58,30 @@ def create_profile(
         "status": "created",
         "profile": new_profile,
     }
+
+
+@router.get("/profile/details", response_model=ProfileDetailsResponse, status_code=200)
+def get_profile_details(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # fetch user details from db and return them
+    user_id = current_user.id
+
+    user_details = db.query(Profile).filter(Profile.user_id == user_id).first()
+    if not user_details:
+        raise HTTPException(
+            status_code=404, detail="User not found. No details to return."
+        )
+    user_financial_goals = (
+        db.query(FinancialGoal).filter(FinancialGoal.user_id == user_id).all()
+    )
+    return {"profile_details": user_details, "financial_goals": user_financial_goals}
+
+
+@router.put("/profile/details/update", status_code=200)
+def update_user_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    pass
