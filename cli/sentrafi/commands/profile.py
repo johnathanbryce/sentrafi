@@ -271,14 +271,127 @@ def profile_edit_command():
     else:
         typer.secho("\n  No financial goals set.", fg="yellow")
 
+    typer.confirm(" \n Would you like to edit your profile?", abort=True, default=True)
+
+    typer.secho("  \n   What would you like to edit?\n", fg="cyan", bold=True)
+    typer.echo("    1. Profession")
+    typer.echo("    2. Income (salary + pay frequency)")
+    typer.echo("    3. Location (country + province/state)")
+    typer.echo("    4. Currency")
+    typer.echo("    5. Additional Context")
+    typer.echo("    6. Financial Goals")
     typer.echo("")
 
+    # walk through one by one what they want to edit
+    while True:
+        choices = typer.prompt("  Select sections to edit (e.g. 1,3,6)")
+        # rejects input that is not comma separated or restricted to nums 1 -> 6
+        selected_edit_items = [
+            int(c.strip())
+            for c in choices.split(",")
+            if c.strip().isdigit() and 1 <= int(c.strip()) <= 6
+        ]
+        if selected_edit_items:
+            break
+        typer.secho(
+            "  Please select numbers between 1-6, separated by commas.", fg="red"
+        )
 
-# ask user what they want to edit
+    # prompt user to edit each editable item they select and build new edit obj
+    edited_user_details_payload = {}
+    for item in selected_edit_items:
+        if item == 1:
+            profession_update = typer.prompt(
+                "  Profession",
+                default=user_details["profile_details"]["profession"] or "",
+            )
+            if profession_update != user_details["profile_details"]["profession"]:
+                edited_user_details_payload["profession"] = profession_update
 
-# walk through one by one what they want to edit
+        if item == 2:
+            salary_update = typer.prompt(
+                "  Annual Salary",
+                default=user_details["profile_details"]["annual_salary"] or "",
+            )
+            if salary_update != user_details["profile_details"]["annual_salary"]:
+                edited_user_details_payload["annual_salary"] = salary_update
+            pay_freq_update = typer.prompt(
+                "  Pay Frequency (weekly / biweekly / semimonthly / monthly)",
+                default=user_details["profile_details"]["pay_frequency"] or "biweekly",
+            )
+            if pay_freq_update != user_details["profile_details"]["pay_frequency"]:
+                edited_user_details_payload["pay_frequency"] = pay_freq_update
 
-# while edit == True:
-# ...
+        if item == 3:
+            country_update = typer.prompt(
+                "  Country Code (e.g. USA, CAN, GBR)",
+                default=user_details["profile_details"]["country"] or "",
+            )
+            if country_update != user_details["profile_details"]["country"]:
+                edited_user_details_payload["country"] = country_update.upper()
+            province_update = typer.prompt(
+                "  Province or State",
+                default=user_details["profile_details"]["province_or_state"] or "",
+            )
+            if province_update != user_details["profile_details"]["province_or_state"]:
+                edited_user_details_payload["province_or_state"] = province_update
 
-# commit updates to db
+        if item == 4:
+            currency_update = typer.prompt(
+                "  Currency Code (e.g. USD, CAD, EUR)",
+                default=user_details["profile_details"]["currency"] or "USD",
+            )
+            if currency_update != user_details["profile_details"]["currency"]:
+                edited_user_details_payload["currency"] = currency_update.upper()
+
+        if item == 5:
+            context_update = typer.prompt(
+                "  Additional Context (max 500 chars)",
+                default=user_details["profile_details"]["additional_context"] or "",
+            )
+            if context_update != user_details["profile_details"]["additional_context"]:
+                edited_user_details_payload["additional_context"] = context_update[:500]
+
+        if item == 6:
+            edited_goals = []
+            for i, goal in enumerate(user_details["financial_goals"]):
+                typer.secho(f"\n  Goal #{i+1}", fg="cyan", bold=True)
+                name = typer.prompt("    Name", default=goal["name"])
+                target = typer.prompt(
+                    "    Target Amount", default=goal["target_amount"] or ""
+                )
+                deadline = typer.prompt(
+                    "    Deadline (YYYY-MM-DD)", default=goal["deadline"] or ""
+                )
+                edited_goals.append(
+                    {
+                        "name": name,
+                        "target_amount": target or None,
+                        "priority": goal["priority"],
+                        "deadline": deadline or None,
+                    }
+                )
+
+            edited_user_details_payload["financial_goals"] = edited_goals
+
+    # send to api to update
+    try:
+        update_profile_res = httpx.put(
+            f"{API_BASE_URL}{API_VERSION_PREFIX}/profile/update",
+            json=edited_user_details_payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        if update_profile_res.status_code == 400:
+            typer.secho(
+                "\n  There was an error updating your profile, please try again",
+                fg="red",
+            )
+        elif update_profile_res.status_code == 200:
+            typer.secho("\n  Profile updated successfully!", fg="green")
+        else:
+            typer.secho("\n  Profile did not update.", fg="red")
+    except httpx.ConnectError:
+        typer.secho(
+            "\n  Error reaching SentraFi backend during profile update.", fg="red"
+        )

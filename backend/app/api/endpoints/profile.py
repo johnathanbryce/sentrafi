@@ -14,7 +14,7 @@ from app.database import get_db
 from app.auth.schemas import (
     UserProfileCreate,
     CreateProfileResponse,
-    ProfileResponse,
+    UserProfileUpdate,
     ProfileDetailsResponse,
 )
 
@@ -79,9 +79,42 @@ def get_profile_details(
     return {"profile_details": user_details, "financial_goals": user_financial_goals}
 
 
-@router.put("/profile/details/update", status_code=200)
+@router.put("/profile/update", status_code=200)
 def update_user_profile(
+    updated_user_details: UserProfileUpdate,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    # fetch user details from db and return them
+    user_id = current_user.id
+
+    user_details = db.query(Profile).filter(Profile.user_id == user_id).first()
+    if not user_details:
+        raise HTTPException(
+            status_code=404, detail="Profile not found. No details to update."
+        )
+
+    updated_user_data = updated_user_details.model_dump(exclude_none=True)
+    updated_goals_data = updated_user_data.pop("financial_goals", None)
+
+    if updated_user_data:
+        db.query(Profile).filter(Profile.user_id == user_id).update(updated_user_data)  # type: ignore
+
+    # overwrite and update ALL user goals from the goals edited payload
+    if updated_goals_data:
+        db.query(FinancialGoal).filter(FinancialGoal.user_id == user_id).delete()
+        for goal in updated_goals_data:
+            db.add(FinancialGoal(user_id=user_id, **goal))
+
+    db.commit()
+
+    return {"status": "updated"}
+
+
+@router.delete("/profile/delete", status_code=201)
+def delete_user(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+
     pass
