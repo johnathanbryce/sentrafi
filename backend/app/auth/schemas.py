@@ -48,7 +48,7 @@ class UserProfileCreate(BaseModel):
     pay_frequency: Optional[str] = Field(default="biweekly", max_length=20)
     country: Optional[str] = Field(default=None, max_length=3)
     province_or_state: Optional[str] = Field(default=None, max_length=50)
-    currency: Optional[str] = Field(default="USD", max_length=3)
+    currency: Optional[str] = Field(default="CAD", max_length=3)
     additional_context: Optional[str] = Field(default=None, max_length=500)
     financial_goals: list[FinancialGoalCreate] = Field(
         default_factory=list, max_length=5
@@ -80,11 +80,11 @@ class ProfileDetailsResponse(BaseModel):
 class UserProfileUpdate(BaseModel):
     profession: Optional[str] = Field(default=None, max_length=100)
     annual_salary: Optional[Decimal] = None
-    pay_frequency: Optional[str] = Field(default="biweekly", max_length=20)
+    pay_frequency: Optional[str] = Field(default=None, max_length=20)
     country: Optional[str] = Field(default=None, max_length=3)
     province_or_state: Optional[str] = Field(default=None, max_length=50)
-    currency: Optional[str] = Field(default="USD", max_length=3)
+    currency: Optional[str] = Field(default=None, max_length=3)
     additional_context: Optional[str] = Field(default=None, max_length=500)
     financial_goals: Optional[list[FinancialGoalCreate]] = Field(
-        default_factory=list, max_length=5
+        default=None, max_length=5
     )

@@ -85,9 +85,8 @@ def update_user_profile(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # fetch user details from db and return them
+    # verify user profile exists before updating
     user_id = current_user.id
-
     user_details = db.query(Profile).filter(Profile.user_id == user_id).first()
     if not user_details:
         raise HTTPException(

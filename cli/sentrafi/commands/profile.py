@@ -1,5 +1,4 @@
 from datetime import datetime
-from pprint import pprint
 
 import typer
 import httpx
@@ -62,7 +61,7 @@ def profile_setup_command():
     # location
     typer.secho("\n[ Location ]", fg="blue", bold=True)
     country = typer.prompt(
-        "  Country code (e.g. USA, CAN, GBR)", default="", show_default=False
+        "  Country code (e.g. CAN, USA, GBR)", default="", show_default=False
     )
     if country:
         profile_data["country"] = country.upper()
@@ -76,7 +75,7 @@ def profile_setup_command():
 
     # currency
     typer.secho("\n[ Currency ]", fg="blue", bold=True)
-    currency = typer.prompt("  Currency code (e.g. USD, CAD, EUR)", default="CAD")
+    currency = typer.prompt("  Currency code (e.g. CAD, USD, EUR)", default="CAD")
     profile_data["currency"] = currency.upper()
 
     # financial goals
@@ -234,7 +233,6 @@ def profile_edit_command():
             f"{API_BASE_URL}{API_VERSION_PREFIX}/profile/details",
             headers={"Authorization": f"Bearer {token}"},
         )
-        user_details = user_details_res.json()
 
         if user_details_res.status_code == 404:
             typer.secho(
@@ -242,6 +240,8 @@ def profile_edit_command():
                 fg="red",
             )
             raise typer.Exit()
+
+        user_details = user_details_res.json()
     except httpx.NetworkError:
         typer.secho("\n  Error reaching SentraFi's backend.", fg="red")
         raise typer.Exit()
@@ -271,9 +271,9 @@ def profile_edit_command():
     else:
         typer.secho("\n  No financial goals set.", fg="yellow")
 
-    typer.confirm(" \n Would you like to edit your profile?", abort=True, default=True)
+    typer.confirm("\n  Would you like to edit your profile?", abort=True, default=True)
 
-    typer.secho("  \n   What would you like to edit?\n", fg="cyan", bold=True)
+    typer.secho("\n  What would you like to edit?\n", fg="cyan", bold=True)
     typer.echo("    1. Profession")
     typer.echo("    2. Income (salary + pay frequency)")
     typer.echo("    3. Location (country + province/state)")
@@ -309,12 +309,23 @@ def profile_edit_command():
                 edited_user_details_payload["profession"] = profession_update
 
         if item == 2:
-            salary_update = typer.prompt(
-                "  Annual Salary",
-                default=user_details["profile_details"]["annual_salary"] or "",
-            )
-            if salary_update != user_details["profile_details"]["annual_salary"]:
-                edited_user_details_payload["annual_salary"] = salary_update
+            while True:
+                salary_update = typer.prompt(
+                    "  Annual Salary (numbers only)",
+                    default=user_details["profile_details"]["annual_salary"] or "",
+                )
+                if not salary_update:
+                    break
+                try:
+                    float(salary_update)
+                    if str(salary_update) != str(user_details["profile_details"]["annual_salary"]):
+                        edited_user_details_payload["annual_salary"] = str(float(salary_update))
+                    break
+                except ValueError:
+                    typer.secho(
+                        "  Invalid input. Enter a number (e.g. 75000 or 75000.50).",
+                        fg="red",
+                    )
             pay_freq_update = typer.prompt(
                 "  Pay Frequency (weekly / biweekly / semimonthly / monthly)",
                 default=user_details["profile_details"]["pay_frequency"] or "biweekly",
@@ -324,7 +335,7 @@ def profile_edit_command():
 
         if item == 3:
             country_update = typer.prompt(
-                "  Country Code (e.g. USA, CAN, GBR)",
+                "  Country Code (e.g. CAN, USA, GBR)",
                 default=user_details["profile_details"]["country"] or "",
             )
             if country_update != user_details["profile_details"]["country"]:
@@ -338,8 +349,8 @@ def profile_edit_command():
 
         if item == 4:
             currency_update = typer.prompt(
-                "  Currency Code (e.g. USD, CAD, EUR)",
-                default=user_details["profile_details"]["currency"] or "USD",
+                "  Currency Code (e.g. CAD, USD, EUR)",
+                default=user_details["profile_details"]["currency"] or "CAD",
             )
             if currency_update != user_details["profile_details"]["currency"]:
                 edited_user_details_payload["currency"] = currency_update.upper()
@@ -360,9 +371,20 @@ def profile_edit_command():
                 target = typer.prompt(
                     "    Target Amount", default=goal["target_amount"] or ""
                 )
-                deadline = typer.prompt(
-                    "    Deadline (YYYY-MM-DD)", default=goal["deadline"] or ""
-                )
+                while True:
+                    deadline = typer.prompt(
+                        "    Deadline (YYYY-MM-DD)", default=goal["deadline"] or ""
+                    )
+                    if not deadline:
+                        break
+                    try:
+                        datetime.strptime(deadline, "%Y-%m-%d")
+                        break
+                    except ValueError:
+                        typer.secho(
+                            "    Invalid date. Use YYYY-MM-DD format (e.g. 2027-06-01).",
+                            fg="red",
+                        )
                 edited_goals.append(
                     {
                         "name": name,
@@ -373,6 +395,10 @@ def profile_edit_command():
                 )
 
             edited_user_details_payload["financial_goals"] = edited_goals
+
+    if not edited_user_details_payload:
+        typer.secho("\n  No changes detected. Profile was not updated.", fg="yellow")
+        return
 
     # send to api to update
     try:
