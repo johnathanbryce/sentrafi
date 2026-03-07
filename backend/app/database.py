@@ -11,9 +11,8 @@ DATABASE_URL = os.environ.get(
     "postgresql://sentrafi:sentrafi_dev@localhost:5432/sentrafi_db",  # local fallback
 )
 
-engine = create_engine(
-    DATABASE_URL, echo=True
-)  # echo logs all SQL statements to console TODO - turn off in prod
+
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

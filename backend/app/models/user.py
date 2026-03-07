@@ -1,6 +1,5 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Optional
 from uuid import uuid4
 
 from sqlalchemy import String, DateTime, func
@@ -21,12 +20,15 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(
-        UUID(as_uuid=False), primary_key=True, default=uuid4
+        UUID(as_uuid=False),
+        primary_key=True,
+        default=lambda: str(
+            uuid4()
+        ),  # lambda makes it callable so sqlalchemy invokes it each time to convert num to str
     )
     email: Mapped[str] = mapped_column(
         String(255), unique=True, nullable=False, index=True
     )
-    username: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(
