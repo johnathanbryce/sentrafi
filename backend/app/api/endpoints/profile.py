@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 
 # db
 from sqlalchemy.orm import Session
+from sqlalchemy import delete
 from app.models.user import User
 from app.models.profile import Profile
 from app.models.financial_goals import FinancialGoal
@@ -110,10 +111,18 @@ def update_user_profile(
     return {"status": "updated"}
 
 
-@router.delete("/profile/delete", status_code=201)
+@router.delete("/profile/delete", status_code=200)
 def delete_user(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    user_id = current_user.id
 
-    pass
+    try:
+        del_statement = delete(User).where(User.id == user_id)
+        db.execute(del_statement)
+        db.commit()
+        return {"status": "Successfully deleted user"}
+    except Exception as e:
+        print(f"Unexpected error in API route when attempting to delete user: {e}")
+        raise HTTPException(status_code=400)

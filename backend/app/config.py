@@ -2,8 +2,6 @@ import os
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "prod")
 
-# database.py
-SQL_ECHO = ENVIRONMENT == "dev"
 
 # main.py
 ALLOWED_ORIGINS = (

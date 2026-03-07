@@ -50,7 +50,7 @@ def init_command():
     )
     if register_res.status_code == 201:
         typer.secho(
-            f"your SentraFi account successfully has been created: {register_res.json()['email']}",
+            f"Your SentraFi account successfully has been created: {register_res.json()['email']}",
             fg="green",
         )
     elif register_res.status_code == 409:
@@ -71,9 +71,4 @@ def init_command():
     user_access_token = login_res.json()["access_token"]
 
     # store in keyring
-    keyring.set_password("sentrafi", user_email, user_access_token)
-
-    # verify with /me
-    headers = {"Authorization": f"Bearer {user_access_token}"}
-    verify_res = httpx.get(f"{API_BASE_URL}{API_VERSION_PREFIX}/me", headers=headers)
-    print(verify_res.json())
+    keyring.set_password("sentrafi", "access_token", user_access_token)

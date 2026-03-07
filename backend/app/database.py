@@ -4,7 +4,6 @@ import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
-from app.config import SQL_ECHO
 
 
 DATABASE_URL = os.environ.get(
@@ -12,8 +11,8 @@ DATABASE_URL = os.environ.get(
     "postgresql://sentrafi:sentrafi_dev@localhost:5432/sentrafi_db",  # local fallback
 )
 
-# echo=True logs all SQL statements to console — useful for debugging, noisy in prod
-engine = create_engine(DATABASE_URL, echo=SQL_ECHO)
+
+engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

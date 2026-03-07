@@ -318,8 +318,12 @@ def profile_edit_command():
                     break
                 try:
                     float(salary_update)
-                    if str(salary_update) != str(user_details["profile_details"]["annual_salary"]):
-                        edited_user_details_payload["annual_salary"] = str(float(salary_update))
+                    if str(salary_update) != str(
+                        user_details["profile_details"]["annual_salary"]
+                    ):
+                        edited_user_details_payload["annual_salary"] = str(
+                            float(salary_update)
+                        )
                     break
                 except ValueError:
                     typer.secho(
@@ -420,4 +424,84 @@ def profile_edit_command():
     except httpx.ConnectError:
         typer.secho(
             "\n  Error reaching SentraFi backend during profile update.", fg="red"
+        )
+
+
+def profile_delete_command():
+    typer.secho("\n  -- CAUTION: PROFILE DELETION --", fg="red", bold=True)
+    typer.secho(
+        " \n  This will permanently delete your profile and all financial goals. \n ",
+        fg="yellow",
+    )
+
+    typer.confirm(
+        "\n  Are you sure you want to delete your profile?",
+        abort=True,
+        default=False,
+    )
+    typer.confirm(
+        "  Please confirm once more to proceed.",
+        abort=True,
+        default=False,
+    )
+
+    token = keyring.get_password("sentrafi", "access_token")
+
+    if not token:
+        typer.secho("  Not logged in. Run 'sentra login' first.", fg="yellow")
+        raise typer.Exit()
+
+    # check if user is logged in / a real user
+    try:
+        verify_user = httpx.get(
+            f"{API_BASE_URL}{API_VERSION_PREFIX}/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        if verify_user.status_code == 401:
+            typer.secho(
+                "This account is not recognized by SentraFi. Please login and create an account before editing.",
+                fg="red",
+            )
+            raise typer.Exit()
+    except httpx.NetworkError:
+        typer.secho("\n  Error reaching SentraFi's backend.", fg="red")
+        raise typer.Exit()
+
+    # send to api to delete acc
+    try:
+        delete_account_res = httpx.delete(
+            f"{API_BASE_URL}{API_VERSION_PREFIX}/profile/delete",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        if delete_account_res.status_code == 400:
+            typer.secho(
+                "\n  There was an error deleting your account, please try again",
+                fg="red",
+            )
+            typer.secho(
+                f"\n  Deletion failed (status {delete_account_res.status_code}).",
+                fg="red",
+            )
+
+        elif delete_account_res.status_code == 200:
+            typer.secho(
+                "\n  Profile deleted successfully! All of your data has been nuked.",
+                fg="green",
+            )
+            typer.secho("  Thanks for using SentraFi. Adios!", fg="cyan")
+
+            # delete jwf from keyring
+            keyring.delete_password("sentrafi", "access_token")
+
+        else:
+            typer.secho(
+                f"\n  Deletion failed (status {delete_account_res.status_code}).",
+                fg="red",
+            )
+
+    except httpx.ConnectError:
+        typer.secho(
+            "\n  Error reaching SentraFi backend during profile deletion.", fg="red"
         )

@@ -32,7 +32,11 @@ import typer
 
 from .commands.init import init_command
 from .commands.auth import login_command
-from .commands.profile import profile_setup_command, profile_edit_command
+from .commands.profile import (
+    profile_setup_command,
+    profile_edit_command,
+    profile_delete_command,
+)
 
 app = typer.Typer()
 
@@ -55,7 +59,7 @@ def login():
 
 @app.command()
 def profile(
-    setup: bool = typer.Option(False, "--setup", help="Create your profile"),
+    setup: bool = typer.Option(False, "--create", help="Create your profile"),
     edit: bool = typer.Option(False, "--edit", help="Edit your profile"),
     delete: bool = typer.Option(False, "--delete", help="Delete your profile"),
 ):
@@ -64,8 +68,9 @@ def profile(
     elif edit:
         profile_edit_command()
     elif delete:
-        # delete logic
-        pass
+        profile_delete_command()
+    else:
+        typer.echo("Please use a proper profile command (--setup, --edit, --delete)")
 
 
 if __name__ == "__main__":
