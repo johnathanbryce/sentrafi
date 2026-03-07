@@ -46,11 +46,14 @@ def profile_setup_command():
         if not annual_salary:
             break
         try:
-            profile_data["annual_salary"] = str(float(annual_salary))
+            val = float(annual_salary)
+            if val >= 10_000_000_000:
+                raise ValueError
+            profile_data["annual_salary"] = str(val)
             break
         except ValueError:
             typer.secho(
-                "  Invalid input. Enter a number (e.g. 75000 or 75000.50).", fg="red"
+                "  Invalid input. Enter a number under 10 billion (e.g. 75000).", fg="red"
             )
     pay_frequency = typer.prompt(
         "  Pay frequency (weekly / biweekly / semimonthly / monthly)",
@@ -60,9 +63,13 @@ def profile_setup_command():
 
     # location
     typer.secho("\n[ Location ]", fg="blue", bold=True)
-    country = typer.prompt(
-        "  Country code (e.g. CAN, USA, GBR)", default="", show_default=False
-    )
+    while True:
+        country = typer.prompt(
+            "  Country code (e.g. CAN, USA, GBR)", default="", show_default=False
+        )
+        if not country or len(country) <= 3:
+            break
+        typer.secho("  Country code must be 3 characters or less.", fg="red")
     if country:
         profile_data["country"] = country.upper()
     province_or_state = typer.prompt(
@@ -75,7 +82,11 @@ def profile_setup_command():
 
     # currency
     typer.secho("\n[ Currency ]", fg="blue", bold=True)
-    currency = typer.prompt("  Currency code (e.g. CAD, USD, EUR)", default="CAD")
+    while True:
+        currency = typer.prompt("  Currency code (e.g. CAD, USD, EUR)", default="CAD")
+        if len(currency) <= 3:
+            break
+        typer.secho("  Currency code must be 3 characters or less.", fg="red")
     profile_data["currency"] = currency.upper()
 
     # financial goals
@@ -112,11 +123,14 @@ def profile_setup_command():
                 if not target_amount:
                     break
                 try:
-                    goal["target_amount"] = str(float(target_amount))
+                    val = float(target_amount)
+                    if val >= 10_000_000_000:
+                        raise ValueError
+                    goal["target_amount"] = str(val)
                     break
                 except ValueError:
                     typer.secho(
-                        "    Invalid input. Enter a number (e.g. 15000 or 15000.50).",
+                        "    Invalid input. Enter a number under 10 billion (e.g. 15000).",
                         fg="red",
                     )
 
@@ -188,6 +202,10 @@ def profile_setup_command():
     typer.confirm("  Save profile?", abort=True, default=True)
 
     token = keyring.get_password("sentrafi", "access_token")
+    if not token:
+        typer.secho("\n  Not logged in. Run 'sentra login' first.", fg="yellow")
+        raise typer.Exit()
+
     create_profile_payload = {**profile_data, "financial_goals": goals_data}
     try:
         create_profile_res = httpx.post(
@@ -210,6 +228,10 @@ def profile_edit_command():
     typer.secho("\nEntering Profile Edit.\n", fg="cyan", bold=True)
 
     token = keyring.get_password("sentrafi", "access_token")
+
+    if not token:
+        typer.secho("\n  Not logged in. Run 'sentra login' first.", fg="yellow")
+        raise typer.Exit()
 
     # check if user is logged in / a real user
     try:
@@ -317,17 +339,17 @@ def profile_edit_command():
                 if not salary_update:
                     break
                 try:
-                    float(salary_update)
+                    val = float(salary_update)
+                    if val >= 10_000_000_000:
+                        raise ValueError
                     if str(salary_update) != str(
                         user_details["profile_details"]["annual_salary"]
                     ):
-                        edited_user_details_payload["annual_salary"] = str(
-                            float(salary_update)
-                        )
+                        edited_user_details_payload["annual_salary"] = str(val)
                     break
                 except ValueError:
                     typer.secho(
-                        "  Invalid input. Enter a number (e.g. 75000 or 75000.50).",
+                        "  Invalid input. Enter a number under 10 billion (e.g. 75000).",
                         fg="red",
                     )
             pay_freq_update = typer.prompt(
@@ -338,10 +360,14 @@ def profile_edit_command():
                 edited_user_details_payload["pay_frequency"] = pay_freq_update
 
         if item == 3:
-            country_update = typer.prompt(
-                "  Country Code (e.g. CAN, USA, GBR)",
-                default=user_details["profile_details"]["country"] or "",
-            )
+            while True:
+                country_update = typer.prompt(
+                    "  Country Code (e.g. CAN, USA, GBR)",
+                    default=user_details["profile_details"]["country"] or "",
+                )
+                if not country_update or len(country_update) <= 3:
+                    break
+                typer.secho("  Country code must be 3 characters or less.", fg="red")
             if country_update != user_details["profile_details"]["country"]:
                 edited_user_details_payload["country"] = country_update.upper()
             province_update = typer.prompt(
@@ -352,10 +378,14 @@ def profile_edit_command():
                 edited_user_details_payload["province_or_state"] = province_update
 
         if item == 4:
-            currency_update = typer.prompt(
-                "  Currency Code (e.g. CAD, USD, EUR)",
-                default=user_details["profile_details"]["currency"] or "CAD",
-            )
+            while True:
+                currency_update = typer.prompt(
+                    "  Currency Code (e.g. CAD, USD, EUR)",
+                    default=user_details["profile_details"]["currency"] or "CAD",
+                )
+                if len(currency_update) <= 3:
+                    break
+                typer.secho("  Currency code must be 3 characters or less.", fg="red")
             if currency_update != user_details["profile_details"]["currency"]:
                 edited_user_details_payload["currency"] = currency_update.upper()
 
@@ -372,9 +402,22 @@ def profile_edit_command():
             for i, goal in enumerate(user_details["financial_goals"]):
                 typer.secho(f"\n  Goal #{i+1}", fg="cyan", bold=True)
                 name = typer.prompt("    Name", default=goal["name"])
-                target = typer.prompt(
-                    "    Target Amount", default=goal["target_amount"] or ""
-                )
+                while True:
+                    target = typer.prompt(
+                        "    Target Amount (numbers only)", default=goal["target_amount"] or ""
+                    )
+                    if not target:
+                        break
+                    try:
+                        val = float(target)
+                        if val >= 10_000_000_000:
+                            raise ValueError
+                        break
+                    except ValueError:
+                        typer.secho(
+                            "    Invalid input. Enter a number under 10 billion (e.g. 15000).",
+                            fg="red",
+                        )
                 while True:
                     deadline = typer.prompt(
                         "    Deadline (YYYY-MM-DD)", default=goal["deadline"] or ""
@@ -398,7 +441,8 @@ def profile_edit_command():
                     }
                 )
 
-            edited_user_details_payload["financial_goals"] = edited_goals
+            if edited_goals != user_details["financial_goals"]:
+                edited_user_details_payload["financial_goals"] = edited_goals
 
     if not edited_user_details_payload:
         typer.secho("\n  No changes detected. Profile was not updated.", fg="yellow")
@@ -420,7 +464,7 @@ def profile_edit_command():
         elif update_profile_res.status_code == 200:
             typer.secho("\n  Profile updated successfully!", fg="green")
         else:
-            typer.secho("\n  Profile did not update.", fg="red")
+            typer.secho(f"\n  Profile did not update (status {update_profile_res.status_code}).", fg="red")
     except httpx.ConnectError:
         typer.secho(
             "\n  Error reaching SentraFi backend during profile update.", fg="red"
@@ -430,7 +474,7 @@ def profile_edit_command():
 def profile_delete_command():
     typer.secho("\n  -- CAUTION: PROFILE DELETION --", fg="red", bold=True)
     typer.secho(
-        " \n  This will permanently delete your profile and all financial goals. \n ",
+        "\n  This will permanently delete your profile, financial goals, and all synced financial data.\n",
         fg="yellow",
     )
 
@@ -477,11 +521,7 @@ def profile_delete_command():
 
         if delete_account_res.status_code == 400:
             typer.secho(
-                "\n  There was an error deleting your account, please try again",
-                fg="red",
-            )
-            typer.secho(
-                f"\n  Deletion failed (status {delete_account_res.status_code}).",
+                "\n  Deletion failed (400). Please try again.",
                 fg="red",
             )
 
@@ -492,7 +532,7 @@ def profile_delete_command():
             )
             typer.secho("  Thanks for using SentraFi. Adios!", fg="cyan")
 
-            # delete jwf from keyring
+            # delete jwt from keyring
             keyring.delete_password("sentrafi", "access_token")
 
         else:

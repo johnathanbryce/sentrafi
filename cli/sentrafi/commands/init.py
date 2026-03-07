@@ -7,14 +7,18 @@ from ..config import API_BASE_URL, API_VERSION_PREFIX, OLLAMA_URL
 
 def init_command():
 
-    # test  health
-    res_health = httpx.get(f"{API_BASE_URL}/health")
-    if res_health.json()["status"] == "ok":
-        typer.secho(
-            "API server running and database connection is successful!", fg="green"
-        )
-    else:
-        typer.secho("API server and database connection failed.", fg="red")
+    # test health
+    try:
+        res_health = httpx.get(f"{API_BASE_URL}/health")
+        if res_health.json()["status"] == "ok":
+            typer.secho(
+                "API server running and database connection is successful!", fg="green"
+            )
+        else:
+            typer.secho("API server and database connection failed.", fg="red")
+            raise typer.Exit(code=1)
+    except httpx.ConnectError:
+        typer.secho("Could not connect to SentraFi backend. Is Docker running?", fg="red")
         raise typer.Exit(code=1)
 
     # test ollama connection
@@ -25,7 +29,7 @@ def init_command():
             f"Successfully connected to Ollama with your following models available: {", ".join(ollama_models)}",
             fg="green",
         )
-    except:
+    except Exception:
         typer.secho(
             "Ollama not detected. Without Ollama, the free tier (local, private AI) is unavailable. "
             "You can still use SentraFi with your own API key (BYOK tier), but your data will be sent to a cloud provider.",
@@ -67,8 +71,13 @@ def init_command():
         raise typer.Exit(code=1)
 
     # login user and store access token in keyring
-    login_res = httpx.post(f"{API_BASE_URL}{API_VERSION_PREFIX}/login", json=user_data)
-    user_access_token = login_res.json()["access_token"]
-
-    # store in keyring
-    keyring.set_password("sentrafi", "access_token", user_access_token)
+    try:
+        login_res = httpx.post(f"{API_BASE_URL}{API_VERSION_PREFIX}/login", json=user_data)
+        if login_res.status_code == 200:
+            user_access_token = login_res.json()["access_token"]
+            keyring.set_password("sentrafi", "access_token", user_access_token)
+            typer.secho("Logged in and token stored.", fg="green")
+        else:
+            typer.secho("Account created but auto-login failed. Run 'sentra login'.", fg="yellow")
+    except httpx.ConnectError:
+        typer.secho("Account created but could not reach backend for login. Run 'sentra login'.", fg="yellow")
