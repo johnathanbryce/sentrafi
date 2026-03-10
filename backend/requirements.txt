@@ -6,3 +6,4 @@ alembic==1.18.4
 pyjwt==2.10.1
 pwdlib[argon2]==0.3.0
 python-multipart==0.0.20
+pymupdf4llm==0.3.4
