@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import DOCS_URL, REDOC_URL, ALLOWED_ORIGINS
 
 # apis
-from app.api.endpoints import auth, profile
+from app.api.endpoints import auth, profile, documents
 
 app = FastAPI(
     title="SentraFi",
@@ -29,6 +29,7 @@ app.add_middleware(
 # instantiate routes:
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(profile.router, prefix="/api/v1", tags=["profile"])
+app.include_router(documents.router, prefix="/api/v1", tags=["documents"])
 
 
 @app.get("/")
