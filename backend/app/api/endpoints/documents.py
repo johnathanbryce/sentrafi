@@ -12,8 +12,7 @@ from app.services.pdf_extraction import extract_document
 
 router = APIRouter()
 
-# This PR — PDF → Markdown extraction (almost done)
-# Next PR — Ledger schema (Transactions, SyncBatches tables)
+# This PR — Ledger schema (Transactions, SyncBatches tables)
 # Next PR — Ollama transformation (Markdown → structured Pydantic JSON)
 # Next PR — sentra sync CLI command (wires it all together: upload → extract → Ollama → store)
 # Next PR - apply current_user api security constraints
