@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .profile import Profile
     from .financial_goals import FinancialGoal
+    from .sync_batch import SyncBatch
+    from .transaction import Transaction
 
 
 class User(Base):
@@ -41,3 +43,5 @@ class User(Base):
     # relationships
     profile: Mapped["Profile"] = relationship(back_populates="user", uselist=False)
     financial_goals: Mapped[list["FinancialGoal"]] = relationship(back_populates="user")
+    sync_batches: Mapped[list["SyncBatch"]] = relationship(back_populates="user")
+    transactions: Mapped[list["Transaction"]] = relationship(back_populates="user")
